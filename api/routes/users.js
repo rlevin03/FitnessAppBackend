@@ -1,5 +1,6 @@
 const express = require("express");
 const { default: mongoose } = require("mongoose");
+const cron = require("node-cron");
 const ClassModel = require("../models/Class");
 const UserModel = require("../models/User");
 
@@ -45,6 +46,15 @@ router.get("/classesAttended", async (req, res) => {
   }
 });
 
+cron.schedule("0 0 1 * *", async () => {
+  try {
+    await UserModel.updateMany({}, { $set: { classesAttended: 0 } });
+    console.log("Classes attended reset");
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 router.get("/totalReservations", async (req, res) => {
   const { userId } = req.query;
 
@@ -63,16 +73,40 @@ router.get("/totalReservations", async (req, res) => {
     }
 
     // Ensure `classesAttended` is an array
-    const classes = Array.isArray(userData.totalReservations) ? userData.totalReservations : [];
+    const classes = Array.isArray(userData.totalReservations)
+      ? userData.totalReservations
+      : [];
 
     // Respond with the `classesAttended` array
     res.json(classes);
-
   } catch (err) {
     console.error("Error fetching user data:", err.message);
     res.status(500).json({ message: "Error fetching user data" });
   }
 });
 
+router.post("/update-campus", async (req, res) => {
+  const { email, location } = req.body;
+  try {
+    await UserModel.updateOne({ email }, { $set: { location } });
+    res.status(200).send({ message: "Campus updated successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Failed to update campus" });
+  }
+});
+
+router.get("/instructors", async (req, res) => {
+  try {
+    const instructors = await UserModel.find(
+      { isInstructor: true },
+      "_id name"
+    );
+    res.json(instructors);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Failed to fetch instructors" });
+  }
+});
 
 module.exports = router;

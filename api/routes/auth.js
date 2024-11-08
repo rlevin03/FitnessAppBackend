@@ -8,7 +8,7 @@ const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
 router.post("/register", async (req, res) => {
-  const { name, email, password, location } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
@@ -20,11 +20,10 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, bcryptSalt);
 
-    const userDoc = await User.create({
+    await User.create({
       name,
       email,
       password: hashedPassword,
-      location,
     });
 
     res.status(201).json({ message: "User registered successfully" });
@@ -100,27 +99,11 @@ router.get("/profile", (req, res) => {
       const {
         name,
         email,
-        verified,
-        classesAttended,
-        reservations,
-        waitLists,
-        location,
-        paid,
-        isInstuctor,
-        totalReservations,
         _id,
       } = await User.findById(userData.id);
       res.json({
         name,
         email,
-        verified,
-        classesAttended,
-        reservations,
-        waitLists,
-        location,
-        paid,
-        isInstuctor,
-        totalReservations,
         _id,
       });
     });

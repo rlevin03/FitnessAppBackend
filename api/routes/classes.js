@@ -65,8 +65,12 @@ router.get("/reservations", async (req, res) => {
     }
 
     const classes = {
-      reservations: user.reservations.sort((a, b) => new Date(a.date) - new Date(b.date)),
-      waitLists: user.waitLists.sort((a, b) => new Date(a.date) - new Date(b.date)),
+      reservations: user.reservations.sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      ),
+      waitLists: user.waitLists.sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      ),
     };
 
     res.status(200).json(classes);
@@ -76,13 +80,29 @@ router.get("/reservations", async (req, res) => {
   }
 });
 
+router.get("/instructor", async (req, res) => {
+  const { instructorId } = req.query;
+
+  if (!instructorId) {
+    return res.status(400).json({ message: "Missing instructorId" });
+  }
+
+  try {
+    const instructor = await UserModel.findById(instructorId);
+    res.status(200).json(instructor.name);
+  } catch (err) {
+    console.error("Error fetching instructor:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.patch("/reserve", async (req, res) => {
   const { userId, classId } = req.body;
 
+  // Validate input
   if (!userId || !classId) {
     return res.status(400).json({ message: "Missing userId or classId" });
   }
-
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
     !mongoose.Types.ObjectId.isValid(classId)
@@ -91,31 +111,26 @@ router.patch("/reserve", async (req, res) => {
   }
 
   const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
+    session.startTransaction();
+
+    // Fetch user and class documents
     const user = await UserModel.findById(userId).session(session);
-    if (!user) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const cls = await ClassModel.findById(classId).session(session);
-    if (!cls) {
-      await session.abortTransaction();
-      return res.status(404).json({ message: "Class not found" });
-    }
 
+    // Validate existence
+    if (!user) throw new Error("User not found");
+    if (!cls) throw new Error("Class not found");
+
+    // Check if the user is already signed up or waitlisted
     if (
       cls.usersSignedUp.includes(userId) ||
       cls.usersOnWaitList.includes(userId)
     ) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ message: "User is already registered for this class" });
+      throw new Error("User is already registered for this class");
     }
 
+    // Add user to the class or waitlist
     if (cls.usersSignedUp.length < cls.maxCapacity) {
       user.reservations.push(classId);
       cls.usersSignedUp.push(userId);
@@ -124,19 +139,28 @@ router.patch("/reserve", async (req, res) => {
       user.waitLists.push(classId);
       cls.usersOnWaitList.push(userId);
     } else {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Class and waitlist are full" });
+      throw new Error("Class and waitlist are full");
     }
 
+    // Save changes to both documents
     await cls.save({ session });
     await user.save({ session });
 
+    // Commit the transaction
     await session.commitTransaction();
     res.status(200).json({ message: "Reservation successful", classData: cls });
   } catch (err) {
     console.error("Error reserving class:", err);
     await session.abortTransaction();
-    res.status(500).json({ message: err.message });
+    res
+      .status(
+        err.message === "Class and waitlist are full"
+          ? 400
+          : err.message.includes("found")
+          ? 404
+          : 500
+      )
+      .json({ message: err.message });
   } finally {
     session.endSession();
   }
@@ -260,26 +284,47 @@ router.post("/attendance", async (req, res) => {
   session.startTransaction();
 
   try {
-    // Update present users: increment classes attended and total classes
+    // Fetch the class data
+    const classData = await ClassModel.findById(classId).session(session);
+
+    if (!classData) {
+      throw new Error("Class not found");
+    }
+
+    const allUsers = classData.usersSignedUp.concat(classData.usersOnWaitList);
+
+    // Update present users
     await UserModel.updateMany(
       { _id: { $in: present } },
       {
         $inc: { classesAttended: 1 },
         $addToSet: { totalReservations: classId },
-        $pull: { reservations: classId },
+        $pull: { reservations: classId, waitLists: classId },
       },
       { session }
     );
 
-    // Update absent users: increment absence count and total classes
+    // Update absent users
     await UserModel.updateMany(
       { _id: { $in: absent } },
-      { $inc: { absenceCount: 1 }, $pull: { reservations: classId } },
+      {
+        $inc: { absenceCount: 1 },
+        $pull: { reservations: classId, waitLists: classId },
+      },
+      { session }
+    );
+
+    // Remove classId from reservations and waitLists for all users
+    await UserModel.updateMany(
+      { _id: { $in: allUsers } },
+      {
+        $pull: { reservations: classId, waitLists: classId },
+      },
       { session }
     );
 
     // Mark attendance as taken for the class
-    const cls = await ClassModel.findByIdAndUpdate(
+    const updatedClass = await ClassModel.findByIdAndUpdate(
       classId,
       { $set: { attendanceTaken: true } },
       { new: true, session }
@@ -288,7 +333,7 @@ router.post("/attendance", async (req, res) => {
     await session.commitTransaction();
     res.status(200).json({
       message: "Attendance submitted successfully.",
-      classData: cls,
+      classData: updatedClass,
     });
   } catch (err) {
     console.error("Error submitting attendance:", err);
