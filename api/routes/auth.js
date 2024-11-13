@@ -1,13 +1,13 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const express = require('express');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
-router.post("/register", async (req, res) => {
+router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
@@ -15,7 +15,7 @@ router.post("/register", async (req, res) => {
     if (existingUser) {
       return res
         .status(409)
-        .json({ error: "User with this email already exists" });
+        .json({ error: 'User with this email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, bcryptSalt);
@@ -26,24 +26,24 @@ router.post("/register", async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const userDoc = await User.findOne({ email });
     if (!userDoc) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
     const passOK = bcrypt.compareSync(password, userDoc.password);
     if (!passOK) {
-      return res.status(401).json({ message: "Password incorrect" });
+      return res.status(401).json({ message: 'Password incorrect' });
     }
     jwt.sign(
       { email: userDoc.email, id: userDoc._id },
@@ -51,56 +51,52 @@ router.post("/login", async (req, res) => {
       {},
       (err, token) => {
         if (err) {
-          return res.status(500).json({ message: "Error signing token", err });
+          return res.status(500).json({ message: 'Error signing token', err });
         }
         res
-          .cookie("token", token, { httpOnly: true, secure: true })
+          .cookie('token', token, { httpOnly: true, secure: true })
           .json(userDoc);
       }
     );
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: 'Server error', error });
   }
 });
 
-router.post("/logout", (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out" });
+router.post('/logout', (req, res) => {
+  res.clearCookie('token').json({ message: 'Logged out' });
 });
 
-router.delete("/delete-account", async (req, res) => {
+router.delete('/delete-account', async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ error: "Email is required" });
+    return res.status(400).json({ error: 'Email is required' });
   }
 
   try {
     const deletedUser = await User.findOneAndDelete({ email });
 
     if (!deletedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ message: "User successfully deleted" });
+    res.json({ message: 'User successfully deleted' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get("/profile", (req, res) => {
+router.get('/profile', (req, res) => {
   const { token } = req.cookies;
   if (token) {
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
       if (err) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.status(401).json({ message: 'Unauthorized' });
       }
-      const {
-        name,
-        email,
-        _id,
-      } = await User.findById(userData.id);
+      const { name, email, _id } = await User.findById(userData.id);
       res.json({
         name,
         email,
@@ -108,15 +104,15 @@ router.get("/profile", (req, res) => {
       });
     });
   } else {
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: 'Unauthorized' });
   }
 });
 
-router.patch("/verify", async (req, res) => {
+router.patch('/verify', async (req, res) => {
   const { email } = req.query;
 
   if (!email) {
-    return res.status(400).json({ error: "Email query parameter is required" });
+    return res.status(400).json({ error: 'Email query parameter is required' });
   }
 
   try {
@@ -127,21 +123,21 @@ router.patch("/verify", async (req, res) => {
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ message: "User successfully verified", user: updatedUser });
+    res.json({ message: 'User successfully verified', user: updatedUser });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.patch("/email-change", async (req, res) => {
+router.patch('/email-change', async (req, res) => {
   const { email, newEmail } = req.body;
 
   if (!email || !newEmail) {
-    return res.status(400).json({ error: "Email and new email are required" });
+    return res.status(400).json({ error: 'Email and new email are required' });
   }
   try {
     const updatedUser = await User.findOneAndUpdate(
@@ -151,29 +147,29 @@ router.patch("/email-change", async (req, res) => {
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ message: "Email updated successfully", user: updatedUser });
+    res.json({ message: 'Email updated successfully', user: updatedUser });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.patch("/password-change", async (req, res) => {
+router.patch('/password-change', async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
 
   if (!email || !oldPassword || !newPassword) {
     return res
       .status(400)
-      .json({ error: "Email, old password, and new password are required" });
+      .json({ error: 'Email, old password, and new password are required' });
   }
   const userDoc = await User.findOne({ email });
   if (!bcrypt.compareSync(oldPassword, userDoc.password)) {
     return res
       .status(401)
-      .json({ message: "Old password inconsistent with current password" });
+      .json({ message: 'Old password inconsistent with current password' });
   }
 
   try {
@@ -184,39 +180,39 @@ router.patch("/password-change", async (req, res) => {
     );
     res
       .status(200)
-      .json({ message: "Password updated successfully", user: updatedUser });
+      .json({ message: 'Password updated successfully', user: updatedUser });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post("/forgot-password", async (req, res) => {
+router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ error: "Email is required" });
+    return res.status(400).json({ error: 'Email is required' });
   }
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   } else {
-    res.status(200).json({ message: "Reset email sent" });
+    res.status(200).json({ message: 'Reset email sent' });
   }
 });
 
-router.patch("/reset-password", async (req, res) => {
+router.patch('/reset-password', async (req, res) => {
   const { email, newPassword } = req.body;
 
   if (!email || !newPassword) {
     return res
       .status(400)
-      .json({ error: "Email and new password are required" });
+      .json({ error: 'Email and new password are required' });
   }
   const user = await User.findOne({ email });
 
   if (!user) {
-    return res.status(404).json({ error: "User not found" });
+    return res.status(404).json({ error: 'User not found' });
   }
 
   try {
@@ -226,10 +222,10 @@ router.patch("/reset-password", async (req, res) => {
       { new: true }
     );
 
-    res.status(200).json({ message: "Password updated successfully" });
+    res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

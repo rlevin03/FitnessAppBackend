@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const ClassSchema = new Schema(
@@ -19,16 +19,16 @@ const ClassSchema = new Schema(
     intensityLevel: { type: String, required: true },
     equipmentToBring: [String],
     attendanceTaken: { type: Boolean, default: false },
-    instructor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    usersSignedUp: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    usersOnWaitList: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    totalSignUps: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    instructor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    usersSignedUp: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    usersOnWaitList: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    totalSignUps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   {
     timestamps: true,
   }
 );
 
-const ClassModel = mongoose.model("Class", ClassSchema);
+const ClassModel = mongoose.model('Class', ClassSchema);
 
 module.exports = ClassModel;

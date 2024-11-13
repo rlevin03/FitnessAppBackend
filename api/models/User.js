@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const userSchema = new Schema({
@@ -9,13 +9,13 @@ const userSchema = new Schema({
   isInstructor: { type: Boolean, default: false },
   classesAttended: { type: Number, default: 0 },
   absenceCount: { type: Number, default: 0 },
-  reservations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
-  waitLists: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
+  reservations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
+  waitLists: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
   verified: { type: Boolean, default: false },
   paid: { type: Boolean, default: false },
-  totalReservations: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
+  totalReservations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Class' }],
 });
 
-const userModel = mongoose.model("User", userSchema);
+const userModel = mongoose.model('User', userSchema);
 
 module.exports = userModel;

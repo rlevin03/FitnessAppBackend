@@ -1,21 +1,21 @@
-const express = require("express");
-const ClassModel = require("../models/Class");
-const UserModel = require("../models/User");
-const { default: mongoose } = require("mongoose");
+const express = require('express');
+const ClassModel = require('../models/Class');
+const UserModel = require('../models/User');
+const { default: mongoose } = require('mongoose');
 
 const router = express.Router();
 
-router.get("/byDate", async (req, res) => {
+router.get('/byDate', async (req, res) => {
   try {
     const classes = await ClassModel.find().sort({ date: 1 });
     res.json(classes);
   } catch (err) {
-    console.error("Error fetching classes:", err);
-    res.status(500).json({ message: "Error fetching classes" });
+    console.error('Error fetching classes:', err);
+    res.status(500).json({ message: 'Error fetching classes' });
   }
 });
 
-router.get("/filtered", async (req, res) => {
+router.get('/filtered', async (req, res) => {
   const { date, types, campuses, instructors } = req.query;
 
   let query = {};
@@ -29,15 +29,15 @@ router.get("/filtered", async (req, res) => {
   }
 
   if (types) {
-    query.type = { $in: types.split(",") };
+    query.type = { $in: types.split(',') };
   }
 
   if (campuses) {
-    query.campus = { $in: campuses.split(",") };
+    query.campus = { $in: campuses.split(',') };
   }
 
   if (instructors) {
-    query.instructor = { $in: instructors.split(",") };
+    query.instructor = { $in: instructors.split(',') };
   }
 
   try {
@@ -48,20 +48,20 @@ router.get("/filtered", async (req, res) => {
   }
 });
 
-router.get("/reservations", async (req, res) => {
+router.get('/reservations', async (req, res) => {
   const { userId } = req.query;
 
   if (!userId) {
-    return res.status(400).send("Missing userId");
+    return res.status(400).send('Missing userId');
   }
 
   try {
     const user = await UserModel.findById(userId)
-      .populate("reservations")
-      .populate("waitLists");
+      .populate('reservations')
+      .populate('waitLists');
 
     if (!user) {
-      return res.status(404).send("User not found");
+      return res.status(404).send('User not found');
     }
 
     const classes = {
@@ -75,39 +75,39 @@ router.get("/reservations", async (req, res) => {
 
     res.status(200).json(classes);
   } catch (err) {
-    console.error("Error fetching user reservations:", err);
+    console.error('Error fetching user reservations:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-router.get("/instructor", async (req, res) => {
+router.get('/instructor', async (req, res) => {
   const { instructorId } = req.query;
 
   if (!instructorId) {
-    return res.status(400).json({ message: "Missing instructorId" });
+    return res.status(400).json({ message: 'Missing instructorId' });
   }
 
   try {
     const instructor = await UserModel.findById(instructorId);
     res.status(200).json(instructor.name);
   } catch (err) {
-    console.error("Error fetching instructor:", err);
+    console.error('Error fetching instructor:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-router.patch("/reserve", async (req, res) => {
+router.patch('/reserve', async (req, res) => {
   const { userId, classId } = req.body;
 
   // Validate input
   if (!userId || !classId) {
-    return res.status(400).json({ message: "Missing userId or classId" });
+    return res.status(400).json({ message: 'Missing userId or classId' });
   }
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
     !mongoose.Types.ObjectId.isValid(classId)
   ) {
-    return res.status(400).json({ message: "Invalid userId or classId" });
+    return res.status(400).json({ message: 'Invalid userId or classId' });
   }
 
   const session = await mongoose.startSession();
@@ -119,15 +119,15 @@ router.patch("/reserve", async (req, res) => {
     const cls = await ClassModel.findById(classId).session(session);
 
     // Validate existence
-    if (!user) throw new Error("User not found");
-    if (!cls) throw new Error("Class not found");
+    if (!user) throw new Error('User not found');
+    if (!cls) throw new Error('Class not found');
 
     // Check if the user is already signed up or waitlisted
     if (
       cls.usersSignedUp.includes(userId) ||
       cls.usersOnWaitList.includes(userId)
     ) {
-      throw new Error("User is already registered for this class");
+      throw new Error('User is already registered for this class');
     }
 
     // Add user to the class or waitlist
@@ -139,7 +139,7 @@ router.patch("/reserve", async (req, res) => {
       user.waitLists.push(classId);
       cls.usersOnWaitList.push(userId);
     } else {
-      throw new Error("Class and waitlist are full");
+      throw new Error('Class and waitlist are full');
     }
 
     // Save changes to both documents
@@ -148,15 +148,15 @@ router.patch("/reserve", async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
-    res.status(200).json({ message: "Reservation successful", classData: cls });
+    res.status(200).json({ message: 'Reservation successful', classData: cls });
   } catch (err) {
-    console.error("Error reserving class:", err);
+    console.error('Error reserving class:', err);
     await session.abortTransaction();
     res
       .status(
-        err.message === "Class and waitlist are full"
+        err.message === 'Class and waitlist are full'
           ? 400
-          : err.message.includes("found")
+          : err.message.includes('found')
           ? 404
           : 500
       )
@@ -166,18 +166,18 @@ router.patch("/reserve", async (req, res) => {
   }
 });
 
-router.patch("/cancel", async (req, res) => {
+router.patch('/cancel', async (req, res) => {
   const { userId, classId } = req.body;
 
   if (!userId || !classId) {
-    return res.status(400).json({ message: "Missing userId or classId" });
+    return res.status(400).json({ message: 'Missing userId or classId' });
   }
 
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
     !mongoose.Types.ObjectId.isValid(classId)
   ) {
-    return res.status(400).json({ message: "Invalid userId or classId" });
+    return res.status(400).json({ message: 'Invalid userId or classId' });
   }
 
   const session = await mongoose.startSession();
@@ -187,13 +187,13 @@ router.patch("/cancel", async (req, res) => {
     const user = await UserModel.findById(userId).session(session);
     if (!user) {
       await session.abortTransaction();
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const cls = await ClassModel.findById(classId).session(session);
     if (!cls) {
       await session.abortTransaction();
-      return res.status(404).json({ message: "Class not found" });
+      return res.status(404).json({ message: 'Class not found' });
     }
 
     const userIndex = cls.usersSignedUp.indexOf(userId);
@@ -237,7 +237,7 @@ router.patch("/cancel", async (req, res) => {
         await session.abortTransaction();
         return res
           .status(400)
-          .json({ message: "User is not registered for this class" });
+          .json({ message: 'User is not registered for this class' });
       }
     }
 
@@ -247,7 +247,7 @@ router.patch("/cancel", async (req, res) => {
     await session.commitTransaction();
     res
       .status(200)
-      .json({ message: "Cancellation successful", classData: cls });
+      .json({ message: 'Cancellation successful', classData: cls });
   } catch (err) {
     console.error(
       `Error cancelling class for userId ${userId} and classId ${classId}:`,
@@ -260,14 +260,14 @@ router.patch("/cancel", async (req, res) => {
   }
 });
 
-router.post("/attendance", async (req, res) => {
+router.post('/attendance', async (req, res) => {
   const { present, absent, classId } = req.body;
 
   // Input validation
   if (!present || !absent || !classId) {
     return res
       .status(400)
-      .json({ message: "Missing present, absent, or classId" });
+      .json({ message: 'Missing present, absent, or classId' });
   }
 
   if (
@@ -277,7 +277,7 @@ router.post("/attendance", async (req, res) => {
   ) {
     return res
       .status(400)
-      .json({ message: "Invalid present, absent, or classId" });
+      .json({ message: 'Invalid present, absent, or classId' });
   }
 
   const session = await mongoose.startSession();
@@ -288,7 +288,7 @@ router.post("/attendance", async (req, res) => {
     const classData = await ClassModel.findById(classId).session(session);
 
     if (!classData) {
-      throw new Error("Class not found");
+      throw new Error('Class not found');
     }
 
     const allUsers = classData.usersSignedUp.concat(classData.usersOnWaitList);
@@ -332,11 +332,11 @@ router.post("/attendance", async (req, res) => {
 
     await session.commitTransaction();
     res.status(200).json({
-      message: "Attendance submitted successfully.",
+      message: 'Attendance submitted successfully.',
       classData: updatedClass,
     });
   } catch (err) {
-    console.error("Error submitting attendance:", err);
+    console.error('Error submitting attendance:', err);
     await session.abortTransaction();
     res.status(500).json({ message: err.message });
   } finally {
