@@ -7,6 +7,8 @@ const router = express.Router();
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
+// POST /auth/register
+// Registers a new user
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -33,6 +35,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// POST /auth/login
+// Logs in a user
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,6 +72,8 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token').json({ message: 'Logged out' });
 });
 
+// DELETE /auth/delete-account
+// Deletes a user account
 router.delete('/delete-account', async (req, res) => {
   const { email } = req.body;
 
@@ -89,6 +95,8 @@ router.delete('/delete-account', async (req, res) => {
   }
 });
 
+// GET /auth/profile
+// Fetches the user profile
 router.get('/profile', (req, res) => {
   const { token } = req.cookies;
   if (token) {
@@ -108,6 +116,8 @@ router.get('/profile', (req, res) => {
   }
 });
 
+// PATCH /auth/verify
+// Verifies a user
 router.patch('/verify', async (req, res) => {
   const { email } = req.query;
 
@@ -133,6 +143,8 @@ router.patch('/verify', async (req, res) => {
   }
 });
 
+// PATCH /auth/email-change
+// Changes a user's email
 router.patch('/email-change', async (req, res) => {
   const { email, newEmail } = req.body;
 
@@ -157,6 +169,8 @@ router.patch('/email-change', async (req, res) => {
   }
 });
 
+// PATCH /auth/password-change
+// Changes a user's password
 router.patch('/password-change', async (req, res) => {
   const { email, oldPassword, newPassword } = req.body;
 
@@ -187,6 +201,8 @@ router.patch('/password-change', async (req, res) => {
   }
 });
 
+// POST /auth/forgot-password
+// Sends a password reset link to the user's email
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -201,6 +217,8 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
+// PATCH /auth/reset-password
+// Resets a user's password
 router.patch('/reset-password', async (req, res) => {
   const { email, newPassword } = req.body;
 

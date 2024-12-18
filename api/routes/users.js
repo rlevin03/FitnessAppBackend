@@ -6,6 +6,8 @@ const UserModel = require('../models/User');
 
 const router = express.Router();
 
+// GET /users/signees
+// Fetches the signees for a specific class
 router.get('/signees', async (req, res) => {
   const { classId } = req.query;
   try {
@@ -30,6 +32,8 @@ router.get('/signees', async (req, res) => {
   }
 });
 
+// GET /users/classesAttended
+// Fetches the classes attended by a specific user
 router.get('/classesAttended', async (req, res) => {
   const { userId } = req.query;
   try {
@@ -55,6 +59,8 @@ cron.schedule('0 0 1 * *', async () => {
   }
 });
 
+// GET /users/totalReservations
+// Fetches the total reservations for a specific user
 router.get('/totalReservations', async (req, res) => {
   const { userId } = req.query;
 
@@ -85,6 +91,8 @@ router.get('/totalReservations', async (req, res) => {
   }
 });
 
+// POST /users/update-campus
+// Updates the campus location for a specific user
 router.post('/update-campus', async (req, res) => {
   const { email, location } = req.body;
   try {
@@ -96,6 +104,8 @@ router.post('/update-campus', async (req, res) => {
   }
 });
 
+// GET /users/instructors
+// Fetches all instructors
 router.get('/instructors', async (req, res) => {
   try {
     const instructors = await UserModel.find(

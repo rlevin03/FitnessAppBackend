@@ -31,6 +31,7 @@ const emailRoutes = require('./routes/email');
 const classRoutes = require('./routes/classes');
 const userRoutes = require('./routes/users');
 
+// The routes are mounted on the /auth, /email, /classes, and /users paths.
 app.use(`/auth`, authRoutes);
 app.use(`/email`, emailRoutes);
 app.use(`/classes`, classRoutes);

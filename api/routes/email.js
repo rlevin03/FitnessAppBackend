@@ -16,6 +16,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// POST /email/send-verification-code
+// Sends a verification code to the user's email
 router.post('/send-verification-code', (req, res) => {
   const { email, code } = req.body;
 
@@ -35,6 +37,8 @@ router.post('/send-verification-code', (req, res) => {
   });
 });
 
+// POST /email/feedback
+// Sends feedback to the app's email address
 router.post('/feedback', (req, res) => {
   const { feedback } = req.body;
 
@@ -54,6 +58,8 @@ router.post('/feedback', (req, res) => {
   });
 });
 
+// POST /email/forgot-password
+// Sends a password reset link to the user's email
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
 
@@ -68,13 +74,16 @@ router.post('/forgot-password', async (req, res) => {
       expiresIn: '1h',
     });
 
-    const resetLink = `http://../auth/reset-password/${token}`; // Replace with your app's URL
+    const resetLink = `http://../auth/reset-password/${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
       subject: 'Password Reset Request',
-      text: `You have requested a password reset. Please click on the link below or copy and paste it into your browser to reset your password:\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`,
+      text: `You have requested a password reset. 
+      Please click on the link below or copy and paste it into your browser to reset your password:
+      \n\n${resetLink}\n\n
+      If you did not request this, please ignore this email.`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {

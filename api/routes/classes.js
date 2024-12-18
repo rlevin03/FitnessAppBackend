@@ -5,6 +5,8 @@ const { default: mongoose } = require('mongoose');
 
 const router = express.Router();
 
+// GET /classes/byDate
+// Fetches all classes sorted by date
 router.get('/byDate', async (req, res) => {
   try {
     const classes = await ClassModel.find().sort({ date: 1 });
@@ -15,6 +17,8 @@ router.get('/byDate', async (req, res) => {
   }
 });
 
+// GET /classes/filtered
+// Fetches classes based on the query parameters
 router.get('/filtered', async (req, res) => {
   const { date, types, campuses, instructors } = req.query;
 
@@ -48,6 +52,8 @@ router.get('/filtered', async (req, res) => {
   }
 });
 
+// GET /classes/reservations
+// Fetches the reservations and waitlists for a specific user
 router.get('/reservations', async (req, res) => {
   const { userId } = req.query;
 
@@ -80,6 +86,8 @@ router.get('/reservations', async (req, res) => {
   }
 });
 
+// GET /classes/instructor
+// Fetches the instructor's name for a specific class
 router.get('/instructor', async (req, res) => {
   const { instructorId } = req.query;
 
@@ -96,6 +104,8 @@ router.get('/instructor', async (req, res) => {
   }
 });
 
+// PATCH /classes/reserve
+// Adds a user to a class or waitlist
 router.patch('/reserve', async (req, res) => {
   const { userId, classId } = req.body;
 
@@ -166,6 +176,8 @@ router.patch('/reserve', async (req, res) => {
   }
 });
 
+// PATCH /classes/cancel
+// Removes a user from a class or waitlist
 router.patch('/cancel', async (req, res) => {
   const { userId, classId } = req.body;
 
@@ -260,6 +272,8 @@ router.patch('/cancel', async (req, res) => {
   }
 });
 
+// POST /classes/attendance
+// Submits the attendance for a class
 router.post('/attendance', async (req, res) => {
   const { present, absent, classId } = req.body;
 
