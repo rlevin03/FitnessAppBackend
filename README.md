@@ -6,5 +6,5 @@ Welcome to the back end of my Fitness App. Feel free to copy the repo and take a
 4. You won't see any classes available on the main page. In order to see them, you will need to input them manually into your MongoDB schema. Just follow the models in the models folder for classes and that should do it. It'll work fine without them but slightly empty
 5. Some other issues specific to the front end will be listed in the readme there
 
-Other than that, just CD into the main folder and run *npm install* to download all the dependencies 
+Other than that, just CD into the main folder and run *npm install* to download all the dependencies \
 Run npm start to startup the back end and then head to the front end to complete the steps there
